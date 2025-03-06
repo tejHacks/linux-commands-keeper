@@ -1,3 +1,17 @@
+<?php
+
+include_once("config.php");
+
+try {
+    $sql = "SELECT * FROM linux_commands";
+    $stmt = $pdo->query($sql); // Use $pdo, not $conn
+    $commands = $stmt->fetchAll(PDO::FETCH_ASSOC); // Fetch all rows as an associative array
+} catch (PDOException $e) {
+    die("Database query failed: " . $e->getMessage());
+}
+
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -24,6 +38,7 @@
         /* Cards */
         .card {
             background-color: #222;
+           /* background: linear-gradient(135deg, #240B28FF, #000000FF); */
             color: white;
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
@@ -34,6 +49,19 @@
             margin-top: auto;
         }
 
+    </style>
+     <style>
+        .run-btn {
+            background-color: #28a745; /* Green color */
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            transition: 0.3s;
+        }
+        .run-btn:hover {
+            background-color: #218838; /* Darker green */
+        }
     </style>
 </head>
 <body>
@@ -56,7 +84,64 @@
     <div class="container text-center mt-5">
         <h1 class="fw-bold">Welcome to Linux Commands Keeper 🐧</h1>
         <p class="lead">Store, Search & Explore Linux Commands in One Place.</p>
+
+        <!-- show the commands here -->
+        <div class="container mt-4">
+        <div class="row" id="commands-container">
+            <?php foreach ($commands as $command): ?>
+                <div class="col-md-4 mb-4 command-card" data-category="<?= htmlspecialchars($command['category']) ?>">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="fa fa-terminal me-2"></i> <?= htmlspecialchars($command['category']) ?></h5>
+                            <p><strong>Command:</strong> <code><?= htmlspecialchars($command['command']) ?></code></p>
+                            <p><strong>Description:</strong> <?= htmlspecialchars($command['description']) ?></p>
+                            <p><strong>Example:</strong> <?= htmlspecialchars($command['example']) ?></p>
+                            <button class="btn btn-primary btn-sm copy-btn" data-command="<?= htmlspecialchars($command['command']) ?>">
+                                <i class="fa fa-copy"></i> Copy
+                            </button>
+                            <button class="btn btn-warning btn-sm edit-btn" data-id="<?= $command['id'] ?>" data-command="<?= htmlspecialchars($command['command']) ?>" data-description="<?= htmlspecialchars($command['description']) ?>" data-category="<?= htmlspecialchars($command['category']) ?>">
+                                <i class="fa fa-edit"></i> Edit
+                            </button>
+                           
+                        </div>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        </div>
     </div>
+    </div>
+
+
+    <!-- edit the command using a modal -->
+     <!-- Edit Command Modal -->
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-dark">Edit The Linux Command</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="edit-form" method="POST">
+                    <input type="hidden" id="edit-id" name="id">
+                    <div class="mb-3">
+                        <label>Category</label>
+                        <input type="text" class="form-control" id="edit-category" name="category" required>
+                    </div>
+                    <div class="mb-3">
+                        <label>Command</label>
+                        <input type="text" class="form-control" id="edit-command" name="command" required>
+                    </div>
+                    <div class="mb-3">
+                        <label>Description</label>
+                        <textarea class="form-control" id="edit-description" name="description" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Update Command</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 
     <!-- Footer -->
     <footer class="text-white py-3">
@@ -66,5 +151,50 @@
     </footer>
 
     <script src="assets/bootstrap-5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Copy the command script
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.copy-btn').forEach(button => {
+                button.addEventListener('click', () => {
+                    navigator.clipboard.writeText(button.getAttribute('data-command'));
+                    alert('Command copied!');
+                });
+            });
+
+        });
+
+        // edit the command modal
+
+    document.querySelectorAll('.edit-btn').forEach(button => {
+        button.addEventListener('click', () => {
+            document.getElementById('edit-id').value = button.getAttribute('data-id');
+            document.getElementById('edit-command').value = button.getAttribute('data-command');
+            document.getElementById('edit-description').value = button.getAttribute('data-description');
+            document.getElementById('edit-category').value = button.getAttribute('data-category');
+
+            var editModal = new bootstrap.Modal(document.getElementById('editModal'));
+            editModal.show();
+        });
+    });
+
+    document.getElementById('edit-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        let formData = new FormData(e.target);
+
+        fetch('edit_command.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.text())
+        .then(result => {
+            alert(result);
+            location.reload();
+        })
+        .catch(error => console.error('Error:', error));
+    });
+    </script>
+
+   
+</body>
 </body>
 </html>
