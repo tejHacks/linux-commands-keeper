@@ -62,6 +62,11 @@ try {
         .run-btn:hover {
             background-color: #218838; /* Darker green */
         }
+        .copy-btn:hover, .edit-btn:hover {
+    transform: scale(1.05);
+    transition: 0.2s;
+}
+
     </style>
 </head>
 <body>
@@ -85,6 +90,15 @@ try {
         <h1 class="fw-bold">Welcome to Linux Commands Keeper 🐧</h1>
         <p class="lead">Store, Search & Explore Linux Commands in One Place.</p>
 
+        <input type="text" id="search-box" class="form-control" placeholder="Search commands...">
+
+
+
+        <div id="copy-alert" class="alert alert-success alert-dismissible fade show d-none" role="alert">
+    Command copied successfully!
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+
         <!-- show the commands here -->
         <div class="container mt-4">
         <div class="row" id="commands-container">
@@ -96,7 +110,7 @@ try {
                             <p><strong>Command:</strong> <code><?= htmlspecialchars($command['command']) ?></code></p>
                             <p><strong>Description:</strong> <?= htmlspecialchars($command['description']) ?></p>
                             <p><strong>Example:</strong> <?= htmlspecialchars($command['example']) ?></p>
-                            <button class="btn btn-primary btn-sm copy-btn" data-command="<?= htmlspecialchars($command['command']) ?>">
+                            <button class="btn btn-primary btn-sm copy-btn" title="Copy to Clipboard" data-command="<?= htmlspecialchars($command['command']) ?>">
                                 <i class="fa fa-copy"></i> Copy
                             </button>
                             <button class="btn btn-warning btn-sm edit-btn" data-id="<?= $command['id'] ?>" data-command="<?= htmlspecialchars($command['command']) ?>" data-description="<?= htmlspecialchars($command['description']) ?>" data-category="<?= htmlspecialchars($command['category']) ?>">
@@ -154,14 +168,26 @@ try {
     <script>
         // Copy the command script
         document.addEventListener('DOMContentLoaded', () => {
-            document.querySelectorAll('.copy-btn').forEach(button => {
-                button.addEventListener('click', () => {
-                    navigator.clipboard.writeText(button.getAttribute('data-command'));
-                    alert('Command copied!');
-                });
-            });
+    document.querySelectorAll('.copy-btn').forEach(button => {
+        button.addEventListener('click', () => {
+            navigator.clipboard.writeText(button.getAttribute('data-command'));
 
+            let alertBox = document.getElementById('copy-alert');
+            alertBox.classList.remove('d-none'); // Show the alert
+            setTimeout(() => alertBox.classList.add('d-none'), 2000); // Hide after 2 sec
         });
+    });
+});
+
+document.getElementById('search-box').addEventListener('keyup', function() {
+    let filter = this.value.toLowerCase();
+    document.querySelectorAll('.command-card').forEach(card => {
+        let text = card.textContent.toLowerCase();
+        card.style.display = text.includes(filter) ? 'block' : 'none';
+    });
+});
+
+
 
         // edit the command modal
 
